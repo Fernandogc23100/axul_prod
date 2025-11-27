@@ -14,14 +14,18 @@ DB_PASSWORD = os.getenv("DB_PASSWORD")
 
 app = Flask(__name__)
 
+DB_SSLMODE = os.getenv("DB_SSLMODE", "require")
+
 def get_connection():
     return psycopg2.connect(
         host=DB_HOST,
         port=DB_PORT,
         dbname=DB_NAME,
         user=DB_USER,
-        password=DB_PASSWORD
+        password=DB_PASSWORD,
+        sslmode=DB_SSLMODE
     )
+
 
 @app.route("/", methods=["GET", "POST"])
 def search():
