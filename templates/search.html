@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Buscador de productos</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --bg: #0f172a;
+            --card-bg: #ffffff;
+            --accent: #0ea5e9;
+            --text-main: #0f172a;
+            --text-muted: #6b7280;
+            --border-soft: #e5e7eb;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+            /* color de fondo por si la imagen tarda en cargar */
+            background-color: #020617;
+
+            /* imagen de fondo */
+            background-image: url('{{ url_for("static", filename="fondo1.jpg") }}');
+            background-position: center center;
+            background-size: cover;      /* que cubra toda la pantalla */
+            background-repeat: no-repeat;
+            background-attachment: fixed; /* efecto “wallpaper” fijo */
+
+            color: #f9fafb;
+        }
+
+
+        .topbar {
+            padding: 10px 16px;
+            border-bottom: 1px solid rgba(20, 10, 5, 0.6);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            justify-content: center;
+            backdrop-filter: blur(8px);
+
+            /* café bien oscuro */
+            background: linear-gradient(to right, #2b180c, #3d2413);
+
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        
+        .topbar-inner {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .topbar-logo {
+            width: 40px;
+            height: 40px;
+            border-radius: 999px;
+            overflow: hidden;   /* recorta la imagen en círculo */
+            flex-shrink: 0;
+        }
+
+        .topbar-logo-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;  /* ajusta el logo al círculo */
+            display: block;
+        }
+
+        .topbar-text-main {
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            color: #e5e7eb;
+        }
+
+        .topbar-text-sub {
+            font-size: 0.7rem;
+            color: #9ca3af;
+        }
+
+        .wrapper {
+            min-height: calc(100vh - 56px);
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 24px 16px 32px;
+        }
+
+        .card {
+            width: 100%;
+            max-width: 720px;
+
+            /* café más oscuro y con transparencia */
+            background: rgba(92, 60, 34, 0.90);
+
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+
+            /* texto más claro para que se lea bien */
+            color: #f9fafb;
+
+            border-radius: 24px;
+            padding: 22px 20px 20px;
+            box-shadow:
+            0 20px 50px rgba(15, 23, 42, 0.7),
+            0 0 0 1px rgba(148, 116, 82, 0.45);
+        }
+
+
+
+        @media (min-width: 640px) {
+            .card {
+                padding: 22px 24px 22px;
+                border-radius: 22px;
+            }
+        }
+
+       .card-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 4px;
+            margin-bottom: 16px;
+        }
+
+
+        .card-title {
+            margin: 0;
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+        }
+
+        .card-subtitle {
+            margin: 2px 0 0;
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.78);
+        }
+
+
+       .badge {
+            display: none;
+        }
+
+
+        .search-form {
+            margin-bottom: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .search-group {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            font-size: 1rem;
+            color: #9ca3af;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 10px 12px 10px 34px;
+            border-radius: 999px;
+
+            /* borde suave y sin azul */
+            border: 1px solid rgba(255, 255, 255, 0.7);
+
+            font-size: 0.95rem;
+            outline: none;
+            transition: all 0.15s ease;
+
+            /* café crema muy suave */
+            background-color: rgba(245, 229, 210, 0.96);
+            color: #1f130b;
+            box-shadow: none;
+        }
+
+        .search-input::placeholder {
+            color: rgba(120, 89, 60, 0.9);
+        }
+
+        .search-input:focus {
+            border-color: #f97316; /* naranja, como el botón */
+            box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.55);
+            background-color: rgba(249, 237, 220, 0.98);
+        }
+
+
+        .search-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary {
+            border: none;
+            border-radius: 999px;
+            padding: 8px 22px;
+            font-size: 0.9rem;
+            font-weight: 600;
+
+            /* degradado café/naranja */
+            background: linear-gradient(to right, #f97316, #ea580c);
+            color: #ffffff;
+
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 12px 22px rgba(234, 88, 12, 0.55);
+            transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            filter: brightness(1.05);
+            box-shadow: 0 16px 30px rgba(234, 88, 12, 0.65);
+        }   
+
+        .btn-primary:active {
+            transform: translateY(0);
+            box-shadow: 0 8px 16px rgba(234, 88, 12, 0.5);
+        }
+
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            filter: brightness(1.05);
+            box-shadow: 0 16px 30px rgba(37, 99, 235, 0.5);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+            box-shadow: 0 8px 16px rgba(37, 99, 235, 0.4);
+        }
+
+        .hint {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .results-info {
+            font-size: 0.8rem;
+            margin: 4px 2px 10px;
+            color: #ffffff;           /* texto blanco puro */
+        }
+
+        /* para que la palabra "americano" también sea blanca */
+        .results-info strong {
+            color: #ffffff;
+        }
+
+
+        .results-info {
+            font-size: 0.8rem;
+            margin: 4px 2px 10px;
+            color: #ffffff;
+        }
+
+        /* número y texto entre comillas en blanco y negrita */
+        .results-info strong,
+        .results-info a {
+            color: #ffffff !important;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.75rem;
+            padding: 3px 8px;
+            border-radius: 999px;
+            background-color: #eff6ff;
+            color: #1d4ed8;
+        }
+
+        .chip-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 999px;
+            background: #22c55e;
+        }
+
+       .table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            border-radius: 14px;
+
+            /* fondo café crema suave */
+            background-color: rgba(245, 229, 210, 0.92);
+            border: 1px solid rgba(148, 116, 82, 0.55);
+
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.88rem;
+            min-width: 100%;
+            background: transparent;
+        }
+
+        thead {
+            background: rgba(222, 196, 165, 0.98); /* un poquito más fuerte */
+        }
+
+        th, td {
+            padding: 8px 10px;
+            text-align: left;
+            border-bottom: 1px solid rgba(148, 116, 82, 0.4);
+            white-space: nowrap;
+        }
+
+        th {
+            font-weight: 600;
+            font-size: 0.8rem;
+            color: #3b2313;
+        }
+
+        tbody tr {
+            background-color: rgba(245, 229, 210, 0.94);
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: rgba(238, 220, 196, 0.95);
+        }
+
+        tbody tr:hover {
+            background-color: rgba(249, 215, 160, 0.9); /* un doradito café al pasar el mouse */
+        }
+
+        /* Texto de las filas de productos */
+        tbody td {
+            color: #1b130c;   /* casi negro, tono café oscuro */
+        }
+
+        /* Código (que está en <a> probablemente) */
+        tbody td a {
+            color: #1b130c;
+            text-decoration: none;
+            font-weight: 600;
+        }   
+
+
+        .col-codigo {
+            font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            font-size: 0.82rem;
+            color: #0f172a;
+        }
+
+        .col-nombre {
+            font-weight: 500;
+        }
+
+        .col-precio {
+            font-weight: 600;
+            color: #16a34a;
+        }
+
+        .empty-state {
+            padding: 14px 12px;
+            border-radius: 12px;
+            background-color: #f9fafb;
+            border: 1px dashed #d1d5db;
+            font-size: 0.85rem;
+            color: #6b7280;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .empty-icon {
+            font-size: 1.2rem;
+        }
+
+        footer {
+            text-align: center;
+            font-size: 0.7rem;
+            color: #6b7280;
+            margin-top: 12px;
+        }
+
+        footer span {
+            color: #e5e7eb;
+        }
+    </style>
+</head>
+<body>
+<header class="topbar">
+    <div class="topbar-inner">
+        <div class="topbar-logo">
+            <img src="{{ url_for('static', filename='axul logo.jpg') }}"
+                 alt="Café Axul"
+                 class="topbar-logo-img">
+        </div>
+        <div>
+            <div class="topbar-text-main"></div>
+            <div class="topbar-text-sub">
+                
+            </div>
+        </div>
+    </div>
+</header>
+
+
+
+<main class="wrapper">
+    <section class="card">
+        <div class="card-header">
+            <div>
+                <h1 class="card-title">Productos Cafe Axul</h1>
+                <p class="card-subtitle">
+                    Escribe nombre o código, sin preocuparte por mayúsculas.
+                </p>
+            </div>
+            <div class="badge">
+                <span class="chip-dot"></span>
+                Online
+            </div>
+        </div>
+
+        <form method="POST" class="search-form">
+            <div class="search-group">
+                <span class="search-icon">🔍</span>
+                <input
+                    type="text"
+                    name="q"
+                    class="search-input"
+                    placeholder="Ejemplo: pizza, latte, mojito, CAF010..."
+                    value="{{ query or '' }}"
+                    autofocus
+                >
+            </div>
+            <div class="search-actions">
+                <button type="submit" class="btn-primary">
+                    Buscar
+                </button>
+                <div class="hint">
+                    
+                </div>
+            </div>
+        </form>
+
+        {% if query %}
+            {% if results %}
+                <p class="results-info">
+                    Se encontraron <strong>{{ results|length }}</strong> producto(s) para
+                    <strong>"{{ query }}"</strong>.
+                </p>
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon">😕</div>
+                    <div>
+                        No se encontraron productos para <strong>"{{ query }}"</strong>.<br>
+                        Prueba con otra palabra o revisa la ortografía.
+                    </div>
+                </div>
+            {% endif %}
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">💡</div>
+                <div>
+                    Escribe el nombre completo, una palabra clave (ej. <strong>pizza</strong>) o el código
+                    (ej. <strong>CAF010</strong>) y presiona <strong>Buscar</strong> o <strong>Enter</strong>.
+                </div>
+            </div>
+        {% endif %}
+
+        {% if results %}
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                    <tr>
+                        <th style="width: 110px;">Código</th>
+                        <th>Nombre</th>
+                        <th style="width: 90px;">Precio</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for p in results %}
+                        <tr>
+                            <td class="col-codigo">{{ p.codigo }}</td>
+                            <td class="col-nombre">{{ p.nombre }}</td>
+                            <td class="col-precio">${{ "%.2f"|format(p.precio) }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+
+        <footer>
+            <span>Made by Fernando</span>
+        </footer>
+    </section>
+</main>
+</body>
+</html>
